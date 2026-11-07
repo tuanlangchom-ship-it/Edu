@@ -110,3 +110,10 @@ dialog::backdrop{background:#17243b66}
   .who{display:none}
   .grid2{grid-template-columns:1fr}
 }
+
+/* Đánh giá nhận xét Thông tư 22 */
+.tag.super{background:#fdf2dc;color:#925900;font-weight:700}
+.badge-d{display:inline-block;padding:2px 8px;border-radius:6px;background:var(--ok-soft);color:var(--ok);font-weight:700;font-size:13px}
+.badge-cd{display:inline-block;padding:2px 8px;border-radius:6px;background:var(--danger-soft);color:var(--danger);font-weight:700;font-size:13px}
+.gradebook input.score.score-d{color:var(--ok);font-weight:700}
+.gradebook input.score.score-cd{color:var(--danger);font-weight:700}

@@ -2,6 +2,9 @@
   "name": "edutrack",
   "private": true,
   "type": "module",
+  "scripts": {
+    "build": "drizzle-kit migrate"
+  },
   "dependencies": {
     "@netlify/database": "^2.0.1",
     "@netlify/functions": "^6.1.0",

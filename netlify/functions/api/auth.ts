@@ -2,14 +2,22 @@ import { randomBytes, scrypt as scryptCb, timingSafeEqual, createHash, randomInt
 import { promisify } from "node:util";
 import { and, eq, gt } from "drizzle-orm";
 import { db } from "../../../db/index.js";
-import { sessions, users } from "../../../db/schema.js";
+import { classes, parentStudents, sessions, users } from "../../../db/schema.js";
 
 const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>;
 export const SESSION_COOKIE = "et_session";
 const SESSION_DAYS = 14;
 
 export type SessionUser = {
-  id: number; username: string; fullName: string; role: "admin" | "teacher" | "parent"; mustChangePassword: boolean;
+  id: number;
+  username: string;
+  fullName: string;
+  role: "admin" | "teacher" | "parent";
+  mustChangePassword: boolean;
+  canManage: boolean;
+  isSuperAdmin: boolean;
+  hasChildren: boolean;
+  isHomeroom: boolean;
 };
 
 export async function hashPassword(password: string): Promise<string> {
@@ -66,14 +74,37 @@ export async function getSessionUser(req: Request): Promise<SessionUser | null> 
   if (!token) return null;
   const rows = await db
     .select({
-      id: users.id, username: users.username, fullName: users.fullName, role: users.role,
+      id: users.id,
+      username: users.username,
+      fullName: users.fullName,
+      role: users.role,
       mustChangePassword: users.mustChangePassword,
+      canManage: users.canManage,
+      isSuperAdmin: users.isSuperAdmin,
     })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
     .where(and(eq(sessions.tokenHash, sha256(token)), gt(sessions.expiresAt, new Date()), eq(users.isActive, true)))
     .limit(1);
-  return (rows[0] as SessionUser) ?? null;
+  if (!rows[0]) return null;
+
+  const u = rows[0];
+  // Kiểm tra xem người dùng có con học tại trường không
+  const [kid] = await db.select({ studentId: parentStudents.studentId }).from(parentStudents).where(eq(parentStudents.parentId, u.id)).limit(1);
+  // Kiểm tra xem giáo viên có phải chủ nhiệm lớp nào không
+  const [hr] = await db.select({ id: classes.id }).from(classes).where(eq(classes.homeroomTeacherId, u.id)).limit(1);
+
+  return {
+    id: u.id,
+    username: u.username,
+    fullName: u.fullName,
+    role: u.role as "admin" | "teacher" | "parent",
+    mustChangePassword: u.mustChangePassword,
+    canManage: Boolean(u.canManage || u.role === "admin"),
+    isSuperAdmin: Boolean(u.isSuperAdmin || u.role === "admin"),
+    hasChildren: Boolean(kid),
+    isHomeroom: Boolean(hr),
+  };
 }
 
 // Chuẩn hoá số điện thoại Việt Nam: bỏ ký tự không phải số, +84 → 0, bù số 0 bị Excel làm mất.

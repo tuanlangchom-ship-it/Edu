@@ -13,7 +13,8 @@ CREATE TABLE "grades" (
 	"semester" integer NOT NULL,
 	"kind" text NOT NULL,
 	"slot" integer DEFAULT 1 NOT NULL,
-	"score" numeric(4,2) NOT NULL,
+	"score" numeric(4,2) DEFAULT '0.00' NOT NULL,
+	"score_text" text,
 	"updated_by" integer,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -49,7 +50,8 @@ CREATE TABLE "students" (
 CREATE TABLE "subjects" (
 	"id" serial PRIMARY KEY,
 	"name" text NOT NULL UNIQUE,
-	"sort_order" integer DEFAULT 0 NOT NULL
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	"evaluation_type" text DEFAULT 'score' NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "teacher_assignments" (
@@ -65,6 +67,8 @@ CREATE TABLE "users" (
 	"password_hash" text NOT NULL,
 	"full_name" text DEFAULT '' NOT NULL,
 	"role" text NOT NULL,
+	"can_manage" boolean DEFAULT false NOT NULL,
+	"is_super_admin" boolean DEFAULT false NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"must_change_password" boolean DEFAULT true NOT NULL,
 	"failed_attempts" integer DEFAULT 0 NOT NULL,
